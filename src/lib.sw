@@ -1,5 +1,7 @@
 library;
 
+//use std::u256::U256;
+
  
 pub struct Fraction {
     sign: bool,
@@ -85,10 +87,10 @@ impl Fraction {
 
 	// Multiplies two fractions
 	/*fn multiply(f1: Fraction, f2: Fraction) -> Fraction {
-		let mut an: u256 = u256::from(0,0,0,f1.num);
-		let mut ad: u256 = u256::from(0,0,0,f1.den);
-		let mut bn: u256 = u256::from(0,0,0,f2.num);
-		let mut bd: u256 = u256::from(0,0,0,f2.den);
+		let mut an: u256 = f1.num.as_u256();
+		let mut ad: u256 = f1.den.as_u256();
+		let mut bn: u256 = f2.num.as_u256();
+		let mut bd: u256 = f2.den.as_u256();
 		let mut m = f1;
 		let mut n = f2;
 		
@@ -98,10 +100,10 @@ impl Fraction {
 			n = Fraction::reduce(n);
 		}
 
-		an = m.num;
-		ad = m.den;
-		bn = n.num;
-		bd = n.den;
+		an = m.num.as_u256();
+		ad = m.den.as_u256();
+		bn = n.num.as_u256();
+		bd = n.den.as_u256();
 
 		
 		if ((an*bn > 2000000000) || (ad*bd > 2000000000)) {
@@ -109,30 +111,30 @@ impl Fraction {
 			let mut d = Fraction{ sign: n.sign, num: n.num, den: m.den};
 			c = Fraction::reduce(c);
 			d = Fraction::reduce(d);
-			an = c.num;
-			ad = c.den;
-			bn = d.num;
-			bd = d.den;
+			an = c.num.as_u256();
+			ad = c.den.as_u256();
+			bn = d.num.as_u256();
+			bd = d.den.as_u256();
 		}
 
 		
 		let mut ddd = (an*bn)/(ad*bd);
-		let mut factor: u256 = 1;
+		let mut factor: u64 = 1;
 		let mut i = 1;
 		while i < 5{
 			if ddd*10 < 2000000000 {
 				factor *= 10;
 				ddd = ddd * 10;
 			}
+			i += 1;
 		}
 		
 		if ((an*bn > 2000000000) || (ad*bd > 2000000000)) {
-			let np: u64 = ((an*bn*factor)/(ad*bd));
-			let factor64: u64 = u64::try_from(factor).unwrap();
+			let np = ((an*bn*factor.as_u256())/(ad*bd)).into();
 			let fr = Fraction{
 				sign: (f1.sign == f2.sign),
 				num: np,
-				den: factor64,
+				den: factor,
 			};
 			fr
 			
@@ -185,6 +187,7 @@ impl Fraction {
 			if (a%j == 0) && (b%j == 0){
 				gcd = j;
 			}
+			j += 1;
 			
 		}
 		
@@ -254,6 +257,16 @@ fn test_inv() {
     assert (finv.num == 5);
 	assert (finv.den == 1);
 	assert (!finv.sign);
+    
+}
+
+#[test]
+fn test_reduce() {
+    let f1 = Fraction::to(false, 10, 50);
+    let fred = Fraction::reduce(f1);
+    assert (fred.num == 1);
+	assert (fred.den == 5);
+	assert (!fred.sign);
     
 }
 
