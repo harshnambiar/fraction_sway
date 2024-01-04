@@ -86,7 +86,7 @@ impl Fraction {
 	}
 
 	// Multiplies two fractions
-	/*fn multiply(f1: Fraction, f2: Fraction) -> Fraction {
+	fn multiply(f1: Fraction, f2: Fraction) -> Fraction {
 		let mut an: u256 = f1.num.as_u256();
 		let mut ad: u256 = f1.den.as_u256();
 		let mut bn: u256 = f2.num.as_u256();
@@ -130,7 +130,7 @@ impl Fraction {
 		}
 		
 		if ((an*bn > 2000000000) || (ad*bd > 2000000000)) {
-			let np = ((an*bn*factor.as_u256())/(ad*bd)).into();
+			let np = u64::try_from((an*bn*factor.as_u256())/(ad*bd)).unwrap();
 			let fr = Fraction{
 				sign: (f1.sign == f2.sign),
 				num: np,
@@ -164,7 +164,7 @@ impl Fraction {
 		
 		fr
 	}
-*/
+
 	// this method will only work till numerator and denominator values are under 100
 	// this has been set for efficiency reasons, and will be modified once the Noir team
 	// can implement dynamic limit for loops
