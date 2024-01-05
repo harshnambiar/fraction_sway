@@ -87,89 +87,6 @@ impl Fraction {
 		return fr;
 	}
 
-	// Multiplies two fractions
-	fn multiply(f1: Fraction, f2: Fraction) -> Fraction {
-		let mut an: u256 = f1.num.as_u256();
-		let mut ad: u256 = f1.den.as_u256();
-		let mut bn: u256 = f2.num.as_u256();
-		let mut bd: u256 = f2.den.as_u256();
-		let mut m = f1;
-		let mut n = f2;
-		
-
-		if ((an*bn > 2000000000) || (ad*bd > 2000000000)) {
-			m = Fraction::reduce(m);
-			n = Fraction::reduce(n);
-		}
-
-		an = m.num.as_u256();
-		ad = m.den.as_u256();
-		bn = n.num.as_u256();
-		bd = n.den.as_u256();
-
-		
-		if ((an*bn > 2000000000) || (ad*bd > 2000000000)) {
-			let mut c = Fraction{ sign: m.sign, num: m.num, den: n.den};
-			let mut d = Fraction{ sign: n.sign, num: n.num, den: m.den};
-			c = Fraction::reduce(c);
-			d = Fraction::reduce(d);
-			an = c.num.as_u256();
-			ad = c.den.as_u256();
-			bn = d.num.as_u256();
-			bd = d.den.as_u256();
-		}
-
-		
-		let mut ddd = (an*bn)/(ad*bd);
-		let mut factor: u64 = 1;
-		let mut i = 1;
-		while i < 5{
-			if ddd*10 < 2000000000 {
-				factor *= 10;
-				ddd = ddd * 10;
-			}
-			i += 1;
-		}
-		
-		if ((an*bn > 2000000000) || (ad*bd > 2000000000)) {
-			
-
-			let np256 = ((an*bn*factor.as_u256())/(ad*bd));
-			let np = u64::try_into(np256).unwrap();
-			let fr = Fraction{
-				sign: (f1.sign == f2.sign),
-				num: np,
-				den: factor,
-			};
-			fr
-			
-		}
-		else {
-			let fr = Fraction {
-				sign: (m.sign == n.sign),
-				num: m.num*n.num,
-				den: m.den*n.den,
-			};
-			fr
-			
-		}
-		
-		
-	}
-
-	// Divides the first fraction by the second and outputs the quotient
-	fn divide(f1: Fraction, f2: Fraction) -> Fraction {
-		assert (f2.num != 0);
-		let f3 = Fraction {
-			sign: f2.sign,
-			num: f2.den,
-			den: f2.num,
-		};
-		let fr = Fraction::multiply(f1, f3);
-		
-		fr
-	}
-
 	// this method will only work till numerator and denominator values are under 100
 	// this has been set for efficiency reasons, and will be modified once the Noir team
 	// can implement dynamic limit for loops
@@ -204,6 +121,92 @@ impl Fraction {
 		};
 		fr
 	}
+
+	// Multiplies two fractions
+	fn multiply(f1: Fraction, f2: Fraction) -> Fraction {
+		let mut an: u256 = f1.num.as_u256();
+		let mut ad: u256 = f1.den.as_u256();
+		let mut bn: u256 = f2.num.as_u256();
+		let mut bd: u256 = f2.den.as_u256();
+		let mut m = f1;
+		let mut n = f2;
+		let lim = 2000000000.as_u256();
+		
+
+		if ((an*bn > lim) || (ad*bd > lim)) {
+			m = Fraction::reduce(m);
+			n = Fraction::reduce(n);
+		}
+
+		an = m.num.as_u256();
+		ad = m.den.as_u256();
+		bn = n.num.as_u256();
+		bd = n.den.as_u256();
+
+		
+		if ((an*bn > lim) || (ad*bd > lim)) {
+			let mut c = Fraction{ sign: m.sign, num: m.num, den: n.den};
+			let mut d = Fraction{ sign: n.sign, num: n.num, den: m.den};
+			c = Fraction::reduce(c);
+			d = Fraction::reduce(d);
+			an = c.num.as_u256();
+			ad = c.den.as_u256();
+			bn = d.num.as_u256();
+			bd = d.den.as_u256();
+		}
+
+		
+		let mut ddd = (an*bn)/(ad*bd);
+		let mut factor: u64 = 1;
+		let mut i = 1;
+		while i < 5{
+			if ddd*10.as_u256() < lim {
+				factor *= 10;
+				ddd = ddd * 10.as_u256();
+			}
+			i += 1;
+		}
+		
+		if ((an*bn > lim) || (ad*bd > lim)) {
+			
+
+			let np256 = ((an*bn*factor.as_u256())/(ad*bd));
+			let np = u64::try_from(np256).unwrap();
+			let fr = Fraction{
+				sign: (f1.sign == f2.sign),
+				num: np,
+				den: factor,
+			};
+			fr
+			
+		}
+		else {
+			let fr = Fraction {
+				sign: (m.sign == n.sign),
+				num: m.num*n.num,
+				den: m.den*n.den,
+			};
+			fr
+			
+		}
+		
+		
+	}
+
+	// Divides the first fraction by the second and outputs the quotient
+	fn divide(f1: Fraction, f2: Fraction) -> Fraction {
+		assert (f2.num != 0);
+		let f3 = Fraction {
+			sign: f2.sign,
+			num: f2.den,
+			den: f2.num,
+		};
+		let fr = Fraction::multiply(f1, f3);
+		
+		fr
+	}
+
+	
 
     
 }
