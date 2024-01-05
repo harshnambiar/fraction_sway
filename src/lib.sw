@@ -1,6 +1,8 @@
 library;
 
-//use std::u256::U256;
+use std::primitive_conversions::u64::*;
+
+
 
  
 pub struct Fraction {
@@ -130,7 +132,10 @@ impl Fraction {
 		}
 		
 		if ((an*bn > 2000000000) || (ad*bd > 2000000000)) {
-			let np = u64::try_from((an*bn*factor.as_u256())/(ad*bd)).unwrap();
+			
+
+			let np256 = ((an*bn*factor.as_u256())/(ad*bd));
+			let np = u64::try_into(np256).unwrap();
 			let fr = Fraction{
 				sign: (f1.sign == f2.sign),
 				num: np,
