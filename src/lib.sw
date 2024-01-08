@@ -11,10 +11,46 @@ pub struct Fraction {
 	den: u64,
 }
 
+fn x() -> Fraction {
+	Fraction {sign: true, num: 0, den: 1}
+}
+
+fn reduction(f: Fraction) -> Fraction {
+	let mut a = f.num;
+	let mut b = f.den;
+	let mut min = 0;
+	let mut j = 1;
+	let mut gcd = 1;
+	if a > b {
+		min = b;
+	}
+	else {
+		min = a;
+	}
+	
+	while j <= min {
+		
+		
+		if (a%j == 0) && (b%j == 0){
+			gcd = j;
+		}
+		j += 1;
+		
+	}
+	
+	
+	let fr = Fraction {
+		sign: f.sign,
+		num: f.num/gcd,
+		den: f.den/gcd,
+	};
+	fr
+}
+
 impl Fraction {
     // creates a fraction with said sign and numerator and denominator
-	fn to(s: bool, n: u64, d: u64) -> Fraction {
-		let fr = Fraction {
+	fn to(s: bool, n: u64, d: u64) -> Self {
+		let fr = Self {
 			sign: s,
 			num: n,
 			den: d,
@@ -90,7 +126,7 @@ impl Fraction {
 	// this method will only work till numerator and denominator values are under 100
 	// this has been set for efficiency reasons, and will be modified once the Noir team
 	// can implement dynamic limit for loops
-	fn reduce(f: Fraction) -> Fraction {
+	fn reduce(f: Self) -> Self {
 		let mut a = f.num;
 		let mut b = f.den;
 		let mut min = 0;
@@ -114,7 +150,7 @@ impl Fraction {
 		}
 		
 		
-		let fr = Fraction {
+		let fr = Self {
 			sign: f.sign,
 			num: f.num/gcd,
 			den: f.den/gcd,
@@ -123,7 +159,7 @@ impl Fraction {
 	}
 
 	// Multiplies two fractions
-	fn multiply(f1: Fraction, f2: Fraction) -> Fraction {
+	fn multiply(f1: Self, f2: Self) -> Self {
 		let mut an: u256 = f1.num.as_u256();
 		let mut ad: u256 = f1.den.as_u256();
 		let mut bn: u256 = f2.num.as_u256();
@@ -132,23 +168,24 @@ impl Fraction {
 		let mut n = f2;
 		let lim = 2000000000.as_u256();
 		
-
 		if ((an*bn > lim) || (ad*bd > lim)) {
-			m = Fraction::reduce(m);
-			n = Fraction::reduce(n);
+			m = reduction(m);
+			n = reduction(n);
 		}
-
+		
+		
 		an = m.num.as_u256();
 		ad = m.den.as_u256();
 		bn = n.num.as_u256();
 		bd = n.den.as_u256();
 
 		
+		
 		if ((an*bn > lim) || (ad*bd > lim)) {
 			let mut c = Fraction{ sign: m.sign, num: m.num, den: n.den};
 			let mut d = Fraction{ sign: n.sign, num: n.num, den: m.den};
-			c = Fraction::reduce(c);
-			d = Fraction::reduce(d);
+			c = reduction(c);
+			d = reduction(d);
 			an = c.num.as_u256();
 			ad = c.den.as_u256();
 			bn = d.num.as_u256();
@@ -196,14 +233,72 @@ impl Fraction {
 	// Divides the first fraction by the second and outputs the quotient
 	fn divide(f1: Fraction, f2: Fraction) -> Fraction {
 		assert (f2.num != 0);
-		let f3 = Fraction {
-			sign: f2.sign,
-			num: f2.den,
-			den: f2.num,
-		};
-		let fr = Fraction::multiply(f1, f3);
+		let mut an: u256 = f1.num.as_u256();
+		let mut ad: u256 = f1.den.as_u256();
+		let mut bn: u256 = f2.den.as_u256();
+		let mut bd: u256 = f2.num.as_u256();
+		let mut m = f1;
+		let mut n = Fraction{sign: f2.sign, num: f2.den, den: f2.num};
+		let lim = 2000000000.as_u256();
 		
-		fr
+		if ((an*bn > lim) || (ad*bd > lim)) {
+			m = reduction(m);
+			n = reduction(n);
+		}
+		
+		
+		an = m.num.as_u256();
+		ad = m.den.as_u256();
+		bn = n.num.as_u256();
+		bd = n.den.as_u256();
+
+		
+		
+		if ((an*bn > lim) || (ad*bd > lim)) {
+			let mut c = Fraction{ sign: m.sign, num: m.num, den: n.den};
+			let mut d = Fraction{ sign: n.sign, num: n.num, den: m.den};
+			c = reduction(c);
+			d = reduction(d);
+			an = c.num.as_u256();
+			ad = c.den.as_u256();
+			bn = d.num.as_u256();
+			bd = d.den.as_u256();
+		}
+
+		
+		let mut ddd = (an*bn)/(ad*bd);
+		let mut factor: u64 = 1;
+		let mut i = 1;
+		while i < 5{
+			if ddd*10.as_u256() < lim {
+				factor *= 10;
+				ddd = ddd * 10.as_u256();
+			}
+			i += 1;
+		}
+		
+		if ((an*bn > lim) || (ad*bd > lim)) {
+			
+
+			let np256 = ((an*bn*factor.as_u256())/(ad*bd));
+			let np = u64::try_from(np256).unwrap();
+			let fr = Fraction{
+				sign: (f1.sign == f2.sign),
+				num: np,
+				den: factor,
+			};
+			fr
+			
+		}
+		else {
+			let fr = Fraction {
+				sign: (m.sign == n.sign),
+				num: m.num*n.num,
+				den: m.den*n.den,
+			};
+			fr
+			
+		}
 	}
 
 	
@@ -248,7 +343,7 @@ fn test_reverse_sign(){
 }
 
 
-/*
+
 #[test]
 fn test_mul() {
     let f1 = Fraction::to(true, 1, 5);
@@ -256,7 +351,7 @@ fn test_mul() {
     let f = Fraction::multiply(f1, f2);
     assert(f.num == f.den);
 }
-*/
+
 
 #[test]
 fn test_inv() {
@@ -278,7 +373,7 @@ fn test_reduce() {
     
 }
 
-/*
+
 #[test]
 fn test_div() {
     let f1 = Fraction::to(true, 6, 5);
@@ -287,4 +382,17 @@ fn test_div() {
     assert (f.num == 6);
     assert (f.den == 25);
 }
-*/
+
+
+#[test]
+fn test_mul_large() {
+	let f1 = Fraction::to(true, 33333333, 5);
+	let f2 = Fraction::to(true, 500000, 77777);
+	let m = Fraction::multiply(f1, f2);
+	
+	let p = m.num;
+	let q = m.den;
+	let lm = p/q;
+	assert (lm == 42857571);
+
+}
