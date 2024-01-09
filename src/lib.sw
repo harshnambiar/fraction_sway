@@ -11,9 +11,7 @@ pub struct Fraction {
 	den: u64,
 }
 
-fn x() -> Fraction {
-	Fraction {sign: true, num: 0, den: 1}
-}
+
 
 fn reduction(f: Fraction) -> Fraction {
 	let mut a = f.num;
@@ -156,6 +154,53 @@ impl Fraction {
 			den: f.den/gcd,
 		};
 		fr
+	}
+
+	// compares two Fractions
+	// returns 0 if they are equal
+	// returns 1 if the first argument is greater
+	// returns 2 if the second argument is greater
+	fn compare(f1: Fraction, f2: Fraction) -> u32 {
+		if ((f1.num == f2.num) && (f1.num == 0)){
+			return 0;
+		}
+		else {
+			if (f1.sign != f2.sign){
+				if (f1.sign){
+					return 1;
+				}
+				else {
+					return 2;
+				}
+			}
+			else {
+				
+				if ((f1.num*f2.den) > (f2.num*f1.den)){
+					if (f1.sign){
+						return 1;
+					}
+					else {
+						return 2;
+					}
+				}
+				else {
+					
+					if ((f1.num*f2.den) != (f2.num*f1.den)){
+						if (f1.sign){
+							return 2;
+						}
+						else {
+							return 1;
+						}
+					}
+					else {
+						return 0;
+					}
+					
+				}
+				
+			}
+		}
 	}
 
 	// Multiplies two fractions
@@ -301,6 +346,272 @@ impl Fraction {
 		}
 	}
 
+	// Adds two fractions
+	fn add(f1: Fraction, f2: Fraction) -> Fraction {
+		let mut an: u256 = f1.num.as_u256();
+		let mut ad: u256 = f1.den.as_u256();
+		let mut bn: u256 = f2.num.as_u256();
+		let mut bd: u256 = f2.den.as_u256();
+		let mut m = f1;
+		let mut n = f2;
+		let lim = 2000000000.as_u256();
+
+		if f1.sign == f2.sign {
+		
+			if ((ad*bd > lim) || ((an*bd + ad*bn) > lim)){
+				m = reduction(m);
+				n = reduction(n);
+			}
+			an = m.num.as_u256();
+			ad = m.den.as_u256();
+			bn = n.num.as_u256();
+			bd = n.den.as_u256();
+			if ((ad*bd > lim) || ((an*bd + ad*bn) > lim)){
+				let mut ddd = (an*bd + ad*bn)/(ad*bd);
+				let mut factor: u64 = 1;
+				let mut i: u8 = 1;
+				while i < 5 {
+					if ddd*10.as_u256() < lim {
+						ddd *= 10.as_u256();
+						factor *= 10;
+					}
+					i += 1;
+				};
+				let np256 = (((an*bd + ad*bn)*factor.as_u256())/(ad*bd));
+				let np = u64::try_from(np256).unwrap();
+				let fr = Fraction {
+					sign: f1.sign,
+					num: np,
+					den: factor, 
+				};
+				return fr;
+			}
+			else {
+				let fr = Fraction {
+					sign: f1.sign,
+					num: (m.num*n.den + n.num*m.den),
+					den: m.den*n.den,
+				};
+				return fr;
+			}
+			
+			
+		}
+		else {
+
+			if ((an*bd) > (bn*ad)){
+				if ((ad*bd > lim) || ((an*bd - ad*bn) > lim)){
+					m = reduction(m);
+					n = reduction(n);
+				}
+				an = m.num.as_u256();
+				ad = m.den.as_u256();
+				bn = n.num.as_u256();
+				bd = n.den.as_u256();
+				if ((ad*bd > lim) || ((an*bd - ad*bn) > lim)){
+					let mut ddd = (an*bd - ad*bn)/(ad*bd);
+					let mut factor: u64 = 1;
+					let mut i: u8 = 1;
+					while i < 5 {
+						if ddd*10.as_u256() < lim {
+							ddd *= 10.as_u256();
+							factor *= 10;
+						}
+						i += 1;
+					};
+					let np256 = (((an*bd - ad*bn)*factor.as_u256())/(ad*bd));
+					let np = u64::try_from(np256).unwrap();
+					let fr = Fraction {
+						sign: f1.sign,
+						num: np,
+						den: factor, 
+					};
+					fr
+				}
+				else {
+					let fr = Fraction {
+						sign: f1.sign,
+						num: (m.num*n.den - n.num*m.den),
+						den: m.den*n.den,
+					};
+					fr
+				}
+			}
+			else {
+				if ((ad*bd > lim) || ((bn*ad - bd*an) > lim)){
+					m = reduction(m);
+					n = reduction(n);
+				}
+				an = m.num.as_u256();
+				ad = m.den.as_u256();
+				bn = n.num.as_u256();
+				bd = n.den.as_u256();
+				if ((ad*bd > lim) || ((bn*ad - bd*an) > lim)){
+					let mut ddd = (bn*ad - bd*an)/(ad*bd);
+					let mut factor: u64 = 1;
+					let mut i: u8 = 1;
+					while i < 5 {
+						if ddd*10.as_u256() < lim {
+							ddd *= 10.as_u256();
+							factor *= 10;
+						}
+						i += 1;
+					};
+					let np256 = (((bn*ad - bd*an)*factor.as_u256())/(ad*bd));
+					let np = u64::try_from(np256).unwrap();
+					let fr = Fraction {
+						sign: f2.sign,
+						num: np,
+						den: factor, 
+					};
+					fr
+				}
+				else {
+					let fr = Fraction {
+						sign: f2.sign,
+						num: (n.num*m.den - m.num*n.den),
+						den: m.den*n.den,
+					};
+					fr
+				}
+			}
+		}
+	}
+
+
+	// Subtracts the second fraction from the first
+	fn subtract(f1: Fraction, f2: Fraction) -> Fraction {
+		let f3 = Fraction {sign: !f2.sign, num: f2.num, den: f2.den};
+		let mut an: u256 = f1.num.as_u256();
+		let mut ad: u256 = f1.den.as_u256();
+		let mut bn: u256 = f2.num.as_u256();
+		let mut bd: u256 = f2.den.as_u256();
+		let mut m = f1;
+		let mut n = f3;
+		let lim = 2000000000.as_u256();
+
+		if f1.sign == f3.sign {
+		
+			if ((ad*bd > lim) || ((an*bd + ad*bn) > lim)){
+				m = reduction(m);
+				n = reduction(n);
+			}
+			an = m.num.as_u256();
+			ad = m.den.as_u256();
+			bn = n.num.as_u256();
+			bd = n.den.as_u256();
+			if ((ad*bd > lim) || ((an*bd + ad*bn) > lim)){
+				let mut ddd = (an*bd + ad*bn)/(ad*bd);
+				let mut factor: u64 = 1;
+				let mut i: u8 = 1;
+				while i < 5 {
+					if ddd*10.as_u256() < lim {
+						ddd *= 10.as_u256();
+						factor *= 10;
+					}
+					i += 1;
+				};
+				let np256 = (((an*bd + ad*bn)*factor.as_u256())/(ad*bd));
+				let np = u64::try_from(np256).unwrap();
+				let fr = Fraction {
+					sign: f1.sign,
+					num: np,
+					den: factor, 
+				};
+				return fr;
+			}
+			else {
+				let fr = Fraction {
+					sign: f1.sign,
+					num: (m.num*n.den + n.num*m.den),
+					den: m.den*n.den,
+				};
+				return fr;
+			}
+			
+			
+		}
+		else {
+
+			if ((an*bd) > (bn*ad)){
+				if ((ad*bd > lim) || ((an*bd - ad*bn) > lim)){
+					m = reduction(m);
+					n = reduction(n);
+				}
+				an = m.num.as_u256();
+				ad = m.den.as_u256();
+				bn = n.num.as_u256();
+				bd = n.den.as_u256();
+				if ((ad*bd > lim) || ((an*bd - ad*bn) > lim)){
+					let mut ddd = (an*bd - ad*bn)/(ad*bd);
+					let mut factor: u64 = 1;
+					let mut i: u8 = 1;
+					while i < 5 {
+						if ddd*10.as_u256() < lim {
+							ddd *= 10.as_u256();
+							factor *= 10;
+						}
+						i += 1;
+					};
+					let np256 = (((an*bd - ad*bn)*factor.as_u256())/(ad*bd));
+					let np = u64::try_from(np256).unwrap();
+					let fr = Fraction {
+						sign: f1.sign,
+						num: np,
+						den: factor, 
+					};
+					fr
+				}
+				else {
+					let fr = Fraction {
+						sign: f1.sign,
+						num: (m.num*n.den - n.num*m.den),
+						den: m.den*n.den,
+					};
+					fr
+				}
+			}
+			else {
+				if ((ad*bd > lim) || ((bn*ad - bd*an) > lim)){
+					m = reduction(m);
+					n = reduction(n);
+				}
+				an = m.num.as_u256();
+				ad = m.den.as_u256();
+				bn = n.num.as_u256();
+				bd = n.den.as_u256();
+				if ((ad*bd > lim) || ((bn*ad - bd*an) > lim)){
+					let mut ddd = (bn*ad - bd*an)/(ad*bd);
+					let mut factor: u64 = 1;
+					let mut i: u8 = 1;
+					while i < 5 {
+						if ddd*10.as_u256() < lim {
+							ddd *= 10.as_u256();
+							factor *= 10;
+						}
+						i += 1;
+					};
+					let np256 = (((bn*ad - bd*an)*factor.as_u256())/(ad*bd));
+					let np = u64::try_from(np256).unwrap();
+					let fr = Fraction {
+						sign: f3.sign,
+						num: np,
+						den: factor, 
+					};
+					fr
+				}
+				else {
+					let fr = Fraction {
+						sign: f3.sign,
+						num: (n.num*m.den - m.num*n.den),
+						den: m.den*n.den,
+					};
+					fr
+				}
+			}
+		}
+	}
+
 	
 
     
@@ -395,4 +706,81 @@ fn test_mul_large() {
 	let lm = p/q;
 	assert (lm == 42857571);
 
+}
+
+
+#[test]
+fn test_compare() {
+    let f1 = Fraction::to(true, 6, 10);
+    let f2 = Fraction::to(true, 3, 5);
+    let cmp = Fraction::compare(f1, f2);
+    assert (cmp == 0);
+    
+}
+
+#[test]
+fn test_compare_zeros() {
+    let f1 = Fraction::to(true, 0, 10);
+    let f2 = Fraction::to(false, 0, 5);
+    let cmp = Fraction::compare(f1, f2);
+    assert (cmp == 0);
+    
+}
+
+#[test]
+fn test_sum() {
+	let f1 = Fraction::to(true, 3, 5);
+	let f2 = Fraction::to(true, 2, 5);
+	let f = Fraction::add(f1, f2);
+	assert (f.num == f.den);
+}
+
+#[test]
+fn test_sum_negative() {
+	let f1 = Fraction::to(true, 3, 5);
+	let f2 = Fraction::to(false, 1, 5);
+	let f = Fraction::add(f1, f2);
+	let cmp = Fraction::compare(f, Fraction::to(true, 2,5));
+	assert (cmp == 0);
+	
+}
+
+#[test]
+fn test_sum_large() {
+	let f1 = Fraction::to(true, 33333333, 5);
+	let f2 = Fraction::to(true, 500000, 33333333);
+	let a = Fraction::add(f1, f2);
+	
+	assert (a.num <= 2000000000);
+	assert (a.den <= 2000000000);
+}
+
+#[test]
+fn test_diff() {
+	let f1 = Fraction::to(true, 3, 5);
+	let f2 = Fraction::to(true, 2, 5);
+	let f = Fraction::subtract(f1, f2);
+	let cmp = Fraction::compare(f, Fraction::to(true, 1,5));
+	assert (cmp == 0);
+	
+}
+
+#[test]
+fn test_diff_negative() {
+	let f1 = Fraction::to(true, 3, 5);
+	let f2 = Fraction::to(false, 2, 5);
+	let f = Fraction::subtract(f1, f2);
+	let cmp = Fraction::compare(f, Fraction::to(true, 1,1));
+	assert (cmp == 0);
+	
+}
+
+#[test]
+fn test_diff_large() {
+	let f1 = Fraction::to(true, 33333333, 5);
+	let f2 = Fraction::to(true, 500000, 33333333);
+	let a = Fraction::subtract(f1, f2);
+	
+	assert (a.num <= 2000000000);
+	assert (a.den <= 2000000000);
 }
