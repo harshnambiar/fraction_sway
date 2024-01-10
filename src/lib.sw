@@ -121,9 +121,8 @@ impl Fraction {
 		return fr;
 	}
 
-	// this method will only work till numerator and denominator values are under 100
-	// this has been set for efficiency reasons, and will be modified once the Noir team
-	// can implement dynamic limit for loops
+	// reduces a fraction to its standard form where the numerator and denominator have no
+	// common factor other than 1
 	fn reduce(f: Self) -> Self {
 		let mut a = f.num;
 		let mut b = f.den;
@@ -154,6 +153,26 @@ impl Fraction {
 			den: f.den/gcd,
 		};
 		fr
+	}
+
+	// approximates the given fraction to the closest fraction with 10000 as the denominator
+	fn approximate(f: Fraction) -> Fraction {
+		if (f.num < 10000 && f.den < 10000) {
+			return f;
+		}
+		
+		else {
+			let num256: u256 = f.num.as_u256();
+			let den256: u256 = f.den.as_u256();
+			let apprx_num = ((num256 * 10000.as_u256())/(den256));
+			let fr = Fraction {
+				sign: f.sign,
+				num: u64::try_from(apprx_num).unwrap(),
+				den: 10000,
+			};
+			return fr;
+		}
+		
 	}
 
 	// compares two Fractions
@@ -612,6 +631,70 @@ impl Fraction {
 		}
 	}
 
+	// Returns the closest but smaller Integer to the Given Fraction, but typecast to Fraction for convenience
+	fn floor(f: Fraction) -> Fraction {
+		let q = f.num/f.den;
+		if (q * f.den == f.num){
+			let fr = Fraction{
+				sign: f.sign,
+				num: f.num,
+				den: f.den,
+			};
+			return fr;
+		}
+		else {
+			if f.sign {
+				let fr = Fraction{
+					sign: f.sign,
+					num: q,
+					den: 1,
+				};
+				return fr;    
+			}
+			else {
+				let fr = Fraction{
+					sign: f.sign,
+					num: q + 1,
+					den: 1,
+				};
+				return fr; 
+			}
+			
+		}
+	}
+
+	// Returns the closest but greater Integer to the Given Fraction, but typecast to Fraction for convenience
+	fn ceiling(f: Fraction) -> Fraction {
+		let q = f.num/f.den;
+		if (q * f.den == f.num){
+			let fr = Fraction{
+				sign: f.sign,
+				num: f.num,
+				den: f.den,
+			};
+			return fr;
+		}
+		else {
+			if f.sign {
+				let fr = Fraction{
+					sign: f.sign,
+					num: q + 1,
+					den: 1,
+				};
+				return fr;    
+			}
+			else {
+				let fr = Fraction{
+					sign: f.sign,
+					num: q,
+					den: 1,
+				};
+				return fr; 
+			}
+			
+		}
+	}
+
 	
 
     
@@ -682,6 +765,15 @@ fn test_reduce() {
 	assert (fred.den == 5);
 	assert (!fred.sign);
     
+}
+
+#[test]
+fn test_approx() {
+	let f = Fraction::to(true, 333333, 4444444);
+	let fapprox = Fraction::approximate(f);
+
+	assert (fapprox.num == 749);
+	
 }
 
 
@@ -783,4 +875,37 @@ fn test_diff_large() {
 	
 	assert (a.num <= 2000000000);
 	assert (a.den <= 2000000000);
+}
+
+
+#[test]
+fn test_floor() {
+	let f = Fraction::to(true, 7, 5);
+	let fl = Fraction::floor(f);
+	assert (fl.num == 1);
+	assert (fl.den == 1);
+}
+
+#[test]
+fn test_floor2() {
+	let f = Fraction::to(false, 12, 5);
+	let fl = Fraction::floor(f);
+	assert (fl.num == 3);
+	assert (fl.den == 1);
+}
+
+#[test]
+fn test_ceiling() {
+	let f = Fraction::to(true, 7, 5);
+	let ce = Fraction::ceiling(f);
+	assert (ce.num == 2);
+	assert (ce.den == 1);
+}
+
+#[test]
+fn test_ceiling2() {
+	let f = Fraction::to(false, 12, 5);
+	let ce = Fraction::ceiling(f);
+	assert (ce.num == 2);
+	assert (ce.den == 1);
 }
