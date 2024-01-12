@@ -2,6 +2,7 @@ library;
 
 use std::primitive_conversions::u64::*;
 
+use std::logging::log;
 
 
  
@@ -365,6 +366,31 @@ impl Fraction {
 		}
 	}
 
+	// returns the square of the given fraction
+	fn square(f: Fraction) -> Fraction {
+		let lim = 2000000000.as_u256();
+		let n = f.num.as_u256();
+		let d = f.den.as_u256();
+		if ((n*n >= lim) || (d*d >= lim)) {
+			let new_num = (n*n*10000.as_u256())/(d*d);
+			let fr = Fraction {
+				sign: true,
+				num: u64::try_from(new_num).unwrap(),
+				den: 10000,
+			};
+			return fr;
+		}
+		else {
+			let fr = Fraction {
+				sign: true,
+				num: f.num * f.num,
+				den: f.den * f.den,
+			};
+			return fr;
+		}
+		
+	}
+
 	// Adds two fractions
 	fn add(f1: Fraction, f2: Fraction) -> Fraction {
 		let mut an: u256 = f1.num.as_u256();
@@ -419,7 +445,7 @@ impl Fraction {
 		else {
 
 			if ((an*bd) > (bn*ad)){
-				if ((ad*bd > lim) || ((an*bd - ad*bn) > lim)){
+				if ((ad*bd > lim) || ((an*bd - ad*bn) > lim) || (an*bd > lim)){
 					m = reduction(m);
 					n = reduction(n);
 				}
@@ -427,7 +453,7 @@ impl Fraction {
 				ad = m.den.as_u256();
 				bn = n.num.as_u256();
 				bd = n.den.as_u256();
-				if ((ad*bd > lim) || ((an*bd - ad*bn) > lim)){
+				if ((ad*bd > lim) || ((an*bd - ad*bn) > lim) || (an*bd > lim)){
 					let mut ddd = (an*bd - ad*bn)/(ad*bd);
 					let mut factor: u64 = 1;
 					let mut i: u8 = 1;
@@ -457,7 +483,7 @@ impl Fraction {
 				}
 			}
 			else {
-				if ((ad*bd > lim) || ((bn*ad - bd*an) > lim)){
+				if ((ad*bd > lim) || ((bn*ad - bd*an) > lim) || (bn*ad > lim)){
 					m = reduction(m);
 					n = reduction(n);
 				}
@@ -465,7 +491,7 @@ impl Fraction {
 				ad = m.den.as_u256();
 				bn = n.num.as_u256();
 				bd = n.den.as_u256();
-				if ((ad*bd > lim) || ((bn*ad - bd*an) > lim)){
+				if ((ad*bd > lim) || ((bn*ad - bd*an) > lim) || (bn*ad > lim)){
 					let mut ddd = (bn*ad - bd*an)/(ad*bd);
 					let mut factor: u64 = 1;
 					let mut i: u8 = 1;
@@ -630,6 +656,48 @@ impl Fraction {
 			}
 		}
 	}
+
+	// returns the approximate square root of the Fraction
+	fn sqrt(x: Fraction) -> Fraction {
+		assert((x.sign != false) || (x.num == 0));
+		if x.num == 0 {
+			x
+		}
+		else {
+			let mut sqrt_approx = Fraction {
+				sign: true,
+				num: (x.num + 1)/2,
+				den: x.den,
+			};
+			
+			let p = x.num.as_u256();
+			let q = x.den.as_u256();
+
+			let mut c_init = sqrt_approx.num.as_u256();
+			let mut d_init = sqrt_approx.den.as_u256();
+
+			let mut c = c_init;
+			let mut d = d_init;
+
+			let mut i = 1;
+			while i < 15 {
+				c = (q*c_init*c_init + p*d_init*d_init);
+				d = 2.as_u256()*q*c_init*d_init;
+				c_init = (c*1000000.as_u256())/d;
+				d_init = 1000000.as_u256();
+				i += 1;
+			}
+
+			let fr = Fraction {
+				sign: true,
+				num: u64::try_from(c_init).unwrap(),
+				den: 1000000,
+			};
+			fr  
+		}
+		
+	}
+
 
 	// Returns the closest but smaller Integer to the Given Fraction, but typecast to Fraction for convenience
 	fn floor(f: Fraction) -> Fraction {
@@ -908,4 +976,43 @@ fn test_ceiling2() {
 	let ce = Fraction::ceiling(f);
 	assert (ce.num == 2);
 	assert (ce.den == 1);
+}
+
+#[test]
+fn test_sqrt1(){
+    let f1 = Fraction::to(true, 3, 8);
+    let sqrt = Fraction::sqrt(f1);
+	let sq = Fraction::square(sqrt);
+    let delta = Fraction::subtract(f1, sq);
+    let epsilon = Fraction {
+        sign: true,
+        num: 1,
+        den: 1000,
+    };
+    if !delta.sign {
+        assert (Fraction::compare(epsilon, Fraction::reverse_sign(delta)) <= 1);
+    }
+    else {
+        assert (Fraction::compare(epsilon, delta) <= 1);
+    }
+    
+}
+
+#[test]
+fn test_sqrt2(){
+    let f1 = Fraction::to(true, 99999, 444);
+    let sqrt = Fraction::sqrt(f1);
+    let delta = Fraction::subtract(f1, Fraction::square(sqrt));
+    let epsilon = Fraction {
+        sign: true,
+        num: 1,
+        den: 1000,
+    };
+    if !delta.sign {
+        assert(Fraction::compare(epsilon, Fraction::reverse_sign(delta)) <= 1);
+    }
+    else {
+        assert (Fraction::compare(epsilon, delta) <= 1);
+    }
+    
 }
